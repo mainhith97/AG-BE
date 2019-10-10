@@ -1,0 +1,11 @@
+# Distribution / packaging
+.idea
+*.env
+
+# dotenv
+.env
+
+# virtualenv
+venv/
+ENV/
+env/

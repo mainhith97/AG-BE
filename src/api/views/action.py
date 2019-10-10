@@ -23,15 +23,16 @@ class ActionViewSet(viewsets.ModelViewSet):
             user = User.objects.get(username=username,
                                     password=password)
             token = Token.encode(user)
-            cart = Cart.objects.filter(user=user.id).count()
-        except:
+            carts = Cart.objects.filter(user=user.id).values("quantity")
+            cart_count = sum(cart.get('quantity') for cart in carts)
+        except ValueError:
             raise ValidationError("Invalid username or password")
         return Response({"success": True,
                          "result": token,
                          "id": user.id,
                          "username": username,
                          "role": user.role,
-                         "cart": cart})
+                         "cart": cart_count})
 
     # search
     @action(methods=['post'], detail=False)
@@ -42,7 +43,13 @@ class ActionViewSet(viewsets.ModelViewSet):
     # get search result
     @action(methods=['get'], detail=False)
     def get_search_result(self, request, *args, **kwargs):
-        products = Product.objects.filter(name__icontains=request.query_params.get('keyword'))
-        product_serializer = ProductSerializer(products, many=True)
-        return Response({"success": True,
-                         "result": product_serializer.data})
+        try:
+            products = Product.objects.filter(name__icontains=request.query_params.get('keyword'))
+            product_serializer = ProductSerializer(products, many=True)
+            for product in product_serializer.data:
+                product['image'] = 'http://127.0.0.1:8001' + product['image']
+            return Response({"success": True,
+                             "result": product_serializer.data})
+        except ValueError:
+            return Response({'success': False,
+                             'result': None})

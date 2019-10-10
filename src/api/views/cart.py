@@ -1,8 +1,8 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 
-from api.models import Cart
-from api.serializers import CartSerializer
+from api.models import Cart, Product
+from api.serializers import CartSerializer, ProductSerializer
 
 
 class CartViewSet(viewsets.ModelViewSet):
@@ -10,7 +10,7 @@ class CartViewSet(viewsets.ModelViewSet):
     serializer_class = CartSerializer
 
     def create(self, request, *args, **kwargs):
-        query = self.get_queryset().filter(product=request.data.get('product'))
+        query = self.get_queryset().filter(product=request.data.get('product'), user=request.data.get('user'))
         if query.count():
             product = query.first()
             product.quantity = product.quantity + 1
@@ -22,6 +22,21 @@ class CartViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
         return Response({'success': True})
+
+    def retrieve(self, request, *args, **kwargs):
+        kwargs_id = kwargs.get('pk')
+        queryset = self.get_queryset().filter(user=kwargs_id)
+        serializer = self.get_serializer(queryset, many=True)
+        for data in serializer.data:
+            product_value = Product.objects.get(id=data.get('product'))
+            product_serializer = ProductSerializer(product_value)
+            product_data = product_serializer.data.copy()
+            product_data['image'] = 'http://127.0.0.1:8001' + product_data['image']
+            data['product_value'] = product_data
+            data['total'] = data.get('quantity') * product_data.get('price_per_unit')
+        return Response({'success': True,
+                         'result': serializer.data,
+                         'totals': sum(i.get('total') for i in serializer.data)})
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -36,3 +51,8 @@ class CartViewSet(viewsets.ModelViewSet):
             instance._prefetched_objects_cache = {}
 
         return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(data={'success': True})
