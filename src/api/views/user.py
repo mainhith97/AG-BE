@@ -9,7 +9,6 @@ from rest_framework.response import Response
 
 from api.models import User
 from api.serializers import UserCreationSerializer, UserSerializer
-from api.services import UserService
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -18,7 +17,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     # register
     def create(self, request, *args, **kwargs):
-        data = UserService.get_creation_data(request.data.copy(), 'distributor')
+        data = request.data.copy()
+        data['password'] = make_password(data.get('password'), salt=settings.SECRET_KEY)
         serializer = UserCreationSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -32,6 +32,19 @@ class UserViewSet(viewsets.ModelViewSet):
         data['result'] = token.decode("utf-8")
         data['success'] = True
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+    # get list user
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset()).exclude(role='mod')
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'success': True,
+                         'result': serializer.data})
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

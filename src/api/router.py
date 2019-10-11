@@ -6,7 +6,6 @@ from api.views import *
 router = DefaultRouter()
 # Define url in here
 router.register(r'user', UserViewSet, base_name="user")
-router.register(r'farmer', FarmerViewSet, base_name="farmer")
 router.register(r'action', ActionViewSet, base_name="action")
 router.register(r'type', TypeViewSet, base_name="type")
 router.register(r'product', ProductViewSet, base_name="product")

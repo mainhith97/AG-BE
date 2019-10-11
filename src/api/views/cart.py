@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.response import Response
 
 from api.models import Cart, Product
@@ -9,6 +9,7 @@ class CartViewSet(viewsets.ModelViewSet):
     queryset = Cart.objects.all()
     serializer_class = CartSerializer
 
+    # add to cart
     def create(self, request, *args, **kwargs):
         query = self.get_queryset().filter(product=request.data.get('product'), user=request.data.get('user'))
         if query.count():
@@ -23,6 +24,7 @@ class CartViewSet(viewsets.ModelViewSet):
             self.perform_create(serializer)
         return Response({'success': True})
 
+    # get cart and calculate total price
     def retrieve(self, request, *args, **kwargs):
         kwargs_id = kwargs.get('pk')
         queryset = self.get_queryset().filter(user=kwargs_id)
@@ -38,6 +40,7 @@ class CartViewSet(viewsets.ModelViewSet):
                          'result': serializer.data,
                          'totals': sum(i.get('total') for i in serializer.data)})
 
+    # update cart
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -50,8 +53,10 @@ class CartViewSet(viewsets.ModelViewSet):
             # forcibly invalidate the prefetch cache on the instance.
             instance._prefetched_objects_cache = {}
 
-        return Response(serializer.data)
+        return Response({'success': True,
+                         'result': serializer.data})
 
+    # delete cart
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)

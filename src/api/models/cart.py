@@ -1,4 +1,5 @@
 from django.db import models
+from rest_framework.compat import MinValueValidator, MaxValueValidator
 
 from api.models import Product, TimeStampedModel, User
 

@@ -2,13 +2,41 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.models import Product, User
-from api.serializers import ProductSerializer, UserSerializer
+from api.models import Product, User, Type
+from api.serializers import ProductSerializer, UserSerializer, TypeSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+
+    # get list product
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        # pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        datas = serializer.data.copy()
+        user_query = User.objects.all()
+        type_query = Type.objects.all()
+        for data in datas:
+            for i in user_query:
+                if i.id == data.get('provider_id'):
+                    user = i
+                    user_serializer = UserSerializer(user)
+                    data['provider'] = user_serializer.data
+            for i in type_query:
+                if i.id == data.get('type'):
+                    typetype = i
+                    type_serializer = TypeSerializer(typetype)
+                    data['typetype'] = type_serializer.data
+        return Response({'success': True,
+                         'result': datas})
 
     # get detail product
     def retrieve(self, request, *args, **kwargs):
