@@ -12,7 +12,7 @@ class Product(TimeStampedModel):
     type = models.ForeignKey(Type, on_delete=models.CASCADE, related_name='type', null=True, blank=True)
     name = models.CharField(max_length=255, null=True, blank=True)
     unit = models.CharField(max_length=255, null=True, blank=True)
-    price_per_unit = models.FloatField(max_length=255, null=True, blank=True)
+    price_per_unit = models.PositiveIntegerField(null=True, blank=True)
     in_stock = models.IntegerField(null=True, blank=True)
     description = models.CharField(max_length=255, null=True, blank=True)
     verify = models.CharField(max_length=255, null=True, blank=True)

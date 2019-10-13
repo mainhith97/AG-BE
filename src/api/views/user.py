@@ -46,6 +46,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'success': True,
                          'result': serializer.data})
 
+    # get profile
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
