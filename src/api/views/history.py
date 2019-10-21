@@ -1,7 +1,8 @@
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.models import History, Cart
+from api.models import History, Cart, Product
 from api.serializers import HistorySerializer
 
 
@@ -29,6 +30,21 @@ class HistoryViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
+        for data in serializer.data:
+            products = data.get('products').split('\n')
+            product_list = []
+            for product in products:
+                quantity = int(product.split()[0])
+                unit = product.split()[1]
+                name = ' '.join(product.split()[2:])
+                product_detail = Product.objects.select_related('provider_id').get(name=name)
+                provider = product_detail.provider_id.company_name
+                total = quantity * int(product_detail.price_per_unit)
+                product_list.append({'name': name,
+                                     'quantity': str(quantity) + ' ' + unit,
+                                     'provider': provider,
+                                     'total': total})
+            data['products'] = product_list
         return Response({'success': True,
                          'result': serializer.data})
 
@@ -54,3 +70,31 @@ class HistoryViewSet(viewsets.ModelViewSet):
 
         return Response({'success': True,
                          'result': serializer.data})
+
+    # get list history by farmer
+    @action(methods=['get'], detail=True)
+    def list_by_farmer(self, request, *args, **kwargs):
+        product_list = []
+        sum_total = 0
+        histories = self.filter_queryset(self.get_queryset()).values('name', 'products', 'status')
+        for history in histories:
+            products = history.get('products').split('\n')
+            for product in products:
+                name = ' '.join(product.split()[2:])
+                product_detail = Product.objects.select_related('provider_id').get(name=name)
+                if product_detail.provider_id_id == int(kwargs.get('pk')):
+                    quantity = int(product.split()[0])
+                    unit = product.split()[1]
+                    provider = product_detail.provider_id.company_name
+                    total = quantity * int(product_detail.price_per_unit)
+                    sum_total = sum_total + total
+                    product_list.append({'buyer': history.get('name'),
+                                         'product_name': name,
+                                         'quantity': str(quantity) + ' ' + unit,
+                                         'provider': provider,
+                                         'total': total,
+                                         'status': history.get('status')
+                                         })
+        return Response({'success': True,
+                         'sum_total': sum_total,
+                         'result': product_list})

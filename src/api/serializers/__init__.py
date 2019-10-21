@@ -4,3 +4,4 @@ from api.serializers.type import TypeSerializer
 from api.serializers.user import UserCreationSerializer, UserSerializer
 from api.serializers.history import HistorySerializer
 from api.serializers.order import OrderSerializer
+from api.serializers.comment import CommentSerializer

@@ -9,4 +9,5 @@ class History(TimeStampedModel):
     name = models.CharField(max_length=255, null=True, blank=True)
     products = models.CharField(max_length=255, null=True, blank=True)
     totals = models.PositiveIntegerField(null=True, blank=True)
+    address = models.CharField(max_length=255, null=True, blank=True)
     status = models.CharField(max_length=255, null=True, blank=True, default='Đang chờ')

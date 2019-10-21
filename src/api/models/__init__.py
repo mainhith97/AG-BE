@@ -5,4 +5,5 @@ from api.models.product import Product
 from api.models.cart import Cart
 from api.models.history import History
 from api.models.order import Order
+from api.models.comment import Comment
 

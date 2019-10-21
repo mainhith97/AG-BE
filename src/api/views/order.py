@@ -13,7 +13,9 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     # add to order
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        data = request.data.copy()
+        data['datetime'] = data.get('datetime')[0:10]
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
@@ -26,12 +28,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         user_orders = self.filter_queryset(self.get_queryset()).filter(user_id=kwargs.get('pk'))
         serializer = self.get_serializer(user_orders, many=True)
         datas = serializer.data.copy()
-        product_query = Product.objects.all()
+        product_query = Product.objects.select_related('provider_id')
         for data in datas:
             for i in product_query:
                 if i.id == data.get('product_id'):
                     product_order = i
                     product_serializer = ProductSerializer(product_order)
+                    data['provider'] = i.provider_id.company_name
                     data['product_order'] = product_serializer.data
         return Response({'success': True,
                          'result': datas})
@@ -85,3 +88,25 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return Response({'success': True,
                          'result': serializer.data})
+
+    # get all list order
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        datas = serializer.data.copy()
+        user_query = User.objects.all()
+        product_query = Product.objects.all()
+        for data in datas:
+            for i in user_query:
+                if i.id == data.get('user_id'):
+                    user = i
+                    user_serializer = UserSerializer(user)
+                    data['user_order'] = user_serializer.data
+            for i in product_query:
+                if i.id == data.get('product_id'):
+                    product_order = i
+                    product_serializer = ProductSerializer(product_order)
+                    data['provider'] = i.provider_id.company_name
+                    data['product_order'] = product_serializer.data
+        return Response({'success': True,
+                         'result': datas})

@@ -55,3 +55,19 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(products, many=True)
         return Response({'success': True,
                          'result': serializer.data})
+
+    # get list product by farmer
+    # detail= True la co id
+    @action(methods=['get'], detail=True)
+    def list_by_farmer(self, request, *args, **kwargs):
+        queryset = self.queryset.filter(provider_id=kwargs.get('pk'))
+        serializer = self.get_serializer(queryset, many=True)
+        type_query = Type.objects.all()
+        for data in serializer.data:
+            for i in type_query:
+                if i.id == data.get('type'):
+                    typetype = i
+                    type_serializer = TypeSerializer(typetype)
+                    data['typetype'] = type_serializer.data
+        return Response({'success': True,
+                         'result': serializer.data})

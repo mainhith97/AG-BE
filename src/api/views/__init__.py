@@ -5,3 +5,4 @@ from api.views.user import UserViewSet
 from api.views.cart import CartViewSet
 from api.views.history import HistoryViewSet
 from api.views.order import OrderViewSet
+from api.views.comment import CommentViewSet
