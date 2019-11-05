@@ -69,6 +69,15 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'success': True,
                          'result': serializer.data})
 
+    # get list farmer
+    @action(methods=['get'], detail=False)
+    def list_farmer(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset()).filter(role='farmer')
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'success': True,
+                         'result': serializer.data})
+
     @action(methods=['put'], detail=True)
     def change_password(self, request, *args, **kwargs):
         instance = self.get_object()

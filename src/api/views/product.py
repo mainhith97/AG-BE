@@ -1,9 +1,15 @@
-from rest_framework import viewsets
+import io
+
+import numpy as np
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from api.models import Product, User, Type
 from api.serializers import ProductSerializer, UserSerializer, TypeSerializer
+import base64
+from PIL import Image
+import cv2
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -44,9 +50,12 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         user = User.objects.get(id=serializer.data.get('provider_id'))
         user_serializer = UserSerializer(user)
+        type = Type.objects.get(id=serializer.data.get('type'))
+        type_serializer = TypeSerializer(type)
         return Response({'success': True,
                          'result': serializer.data,
-                         'user': user_serializer.data})
+                         'user': user_serializer.data,
+                         'type': type_serializer.data})
 
     # get list newest
     @action(methods=['get'], detail=False)
@@ -71,3 +80,34 @@ class ProductViewSet(viewsets.ModelViewSet):
                     data['typetype'] = type_serializer.data
         return Response({'success': True,
                          'result': serializer.data})
+
+    # create product
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response({'success': True, 'result': serializer.data},
+                        status=status.HTTP_201_CREATED, headers=headers)
+
+    # edit product
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+
+        return Response({'success': True, 'result': serializer.data})
+
+    # delete product
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(data={'success': True})

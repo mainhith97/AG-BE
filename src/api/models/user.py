@@ -15,8 +15,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     company_name = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(max_length=255, null=False, unique=True)
     address = models.CharField(max_length=255, null=True, blank=True)
-    telephone = models.CharField(max_length=11, null=True, blank=True, validators=[MinLengthValidator(9),
-                                 RegexValidator(regex='^\d+$', message='A valid integer is required.')])
+    telephone = models.CharField(validators=[MinLengthValidator(9),
+                                             RegexValidator(regex='^\d+$', message='A valid integer is required.')],
+                                 max_length=11, null=True, blank=True)
     description = models.CharField(max_length=255, null=True, blank=True)
     role = models.CharField(max_length=255, null=True)
 

@@ -11,7 +11,8 @@ class CartViewSet(viewsets.ModelViewSet):
 
     # add to cart
     def create(self, request, *args, **kwargs):
-        query = self.filter_queryset(self.get_queryset()).filter(product=request.data.get('product'), user=request.data.get('user'))
+        query = self.filter_queryset(self.get_queryset()).filter(product=request.data.get('product'),
+                                                                 user=request.data.get('user'))
         if query.count():
             product = query.first()
             product.quantity = product.quantity + 1
