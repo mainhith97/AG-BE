@@ -14,7 +14,7 @@ router.register(r'cart', CartViewSet, base_name="cart")
 router.register(r'history', HistoryViewSet, base_name="history")
 router.register(r'order', OrderViewSet, base_name="order")
 router.register(r'comment', CommentViewSet, base_name="comment")
-
+router.register(r'reply', ReplyViewSet, base_name="reply")
 
 urlpatterns = [
     url(r'^', include(router.urls))

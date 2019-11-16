@@ -44,8 +44,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     def retrieve_by_farmer(self, request, *args, **kwargs):
         user_orders = self.filter_queryset(self.get_queryset()).filter(product_id__provider_id=kwargs.get('pk'))
         for order in user_orders:
-            if order.status == 'Đang chờ':
-                order.status = "Đã xem"
+            if order.status == 'Pending':
+                order.status = "Seen"
                 order.save()
         serializer = self.get_serializer(user_orders, many=True)
         datas = serializer.data.copy()
@@ -69,7 +69,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=True)
     def get_unseen_orders(self, request, *args, **kwargs):
         unseen_orders = self.filter_queryset(self.get_queryset()).filter(product_id__provider_id=kwargs.get('pk'),
-                                                                         status='Đang chờ').count()
+                                                                         status='Pending').count()
         return Response({'success': True,
                          'result': unseen_orders})
 

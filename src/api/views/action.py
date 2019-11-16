@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
+from django.template.loader import render_to_string
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -7,6 +8,7 @@ from rest_framework.response import Response
 
 from api.models import Product, User, Cart, History, Order, Comment, Type
 from api.serializers import ProductSerializer, UserSerializer, TypeSerializer
+from api.services.email import EmailThread
 from api.services.token import Token
 
 
@@ -25,7 +27,7 @@ class ActionViewSet(viewsets.ModelViewSet):
             token = Token.encode(user)
             carts = Cart.objects.filter(user=user.id).values("quantity")
             cart_count = sum(cart.get('quantity') for cart in carts)
-        except ValueError:
+        except:
             raise ValidationError("Invalid username or password")
         return Response({"success": True,
                          "result": token,
@@ -68,6 +70,18 @@ class ActionViewSet(viewsets.ModelViewSet):
             return Response({'success': False,
                              'result': None})
 
+    # admin search user
+    @action(methods=['get'], detail=False)
+    def get_search_user(self, request, *args, **kwargs):
+        try:
+            users = User.objects.filter(name__icontains=request.query_params.get('keyword'))
+            user_serializer = UserSerializer(users, many=True)
+            return Response({"success": True,
+                             "result": user_serializer.data})
+        except ValueError:
+            return Response({'success': False,
+                             'result': None})
+
     # statistic
     @action(methods=['get'], detail=False)
     def get_statistic(self, request, *args, **kwargs):
@@ -103,7 +117,7 @@ class ActionViewSet(viewsets.ModelViewSet):
                     product_list += 1
 
         orders = Order.objects.select_related('product_id').filter(product_id__provider_id=kwargs.get('pk'))
-        accepted_orders = orders.filter(status='Chấp nhận')
+        accepted_orders = orders.filter(status='Accept')
         accepted_orders_revenue = sum(order.proposed_price for order in accepted_orders)
 
         responses = Comment.objects.select_related('product_id').filter(
@@ -119,5 +133,26 @@ class ActionViewSet(viewsets.ModelViewSet):
                              'accepted': accepted_orders.count(),
                              'revenue': accepted_orders_revenue
                          },
-                         'total_revenue': sum_total+accepted_orders_revenue,
+                         'total_revenue': sum_total + accepted_orders_revenue,
                          "responses": responses})
+
+    @action(methods=['post'], detail=False)
+    def forgot_password(self, request, *args, **kwargs):
+        try:
+            user = User.objects.get(email=request.data.get('email'))
+            token = Token.encode(user)
+            link = f'http://localhost:4200/change_password?token={token}'
+        except:
+            raise Exception('User does not exist')
+
+        content = render_to_string('../templates/email.html', {'link': link})
+
+        EmailThread(subject='Forgot Password', email=[request.data.get('email')], content=content).start()
+        return Response({"success": True})
+
+    @action(methods=['post'], detail=False)
+    def change_password(self, request, *args, **kwargs):
+        user = Token.decode(request.data.get('token'))
+        user.password = make_password(request.data.get('password'), salt=settings.SECRET_KEY)
+        user.save()
+        return Response({"success": True})

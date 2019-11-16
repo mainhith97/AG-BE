@@ -53,6 +53,14 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'success': True,
                          'result': serializer.data})
 
+    # get supplier profile
+    @action(methods=['get'], detail=True)
+    def retrieve_supplier(self, request, *args, **kwargs):
+        supplier = User.objects.get(id=kwargs.get('pk'))
+        serializer = self.get_serializer(supplier)
+        return Response({'success': True,
+                         'result': serializer.data})
+
     # update profile
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -84,3 +92,8 @@ class UserViewSet(viewsets.ModelViewSet):
         instance.password = make_password(request.data.get('password'), salt=settings.SECRET_KEY)
         instance.save()
         return Response({"success": True})
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(data={'success': True})
