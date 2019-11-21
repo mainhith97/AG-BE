@@ -52,6 +52,8 @@ class HistoryViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         user_history = self.filter_queryset(self.get_queryset()).filter(user_id=kwargs.get('pk'))
         serializer = self.get_serializer(user_history, many=True)
+        for data in serializer.data:
+            data['created_at'] = data.get('created_at')[0:10]
         return Response({'success': True,
                          'result': serializer.data})
 

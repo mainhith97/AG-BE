@@ -46,6 +46,21 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'success': True,
                          'result': serializer.data})
 
+    # get list supplier
+    @action(methods=['get'], detail=False)
+    def list_supplier(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset()).filter(role='farmer')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'success': True,
+                         'result': serializer.data})
+    # get list distributor
+    @action(methods=['get'], detail=False)
+    def list_distributor(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset()).filter(role='distributor')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'success': True,
+                         'result': serializer.data})
+
     # get profile
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

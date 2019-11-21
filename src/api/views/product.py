@@ -1,15 +1,9 @@
-import io
-
-import numpy as np
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from api.models import Product, User, Type
 from api.serializers import ProductSerializer, UserSerializer, TypeSerializer
-import base64
-from PIL import Image
-import cv2
 
 
 class ProductViewSet(viewsets.ModelViewSet):

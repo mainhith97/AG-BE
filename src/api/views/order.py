@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.models import Order, User, Product
-from api.serializers import UserSerializer, ProductSerializer
+from api.models import Order, User, Product, Reason
+from api.serializers import UserSerializer, ProductSerializer, ReasonSerializer
 from api.serializers.order import OrderSerializer
 
 
@@ -22,6 +22,26 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response({'success': True, 'result': serializer.data},
                         status=status.HTTP_201_CREATED, headers=headers)
 
+    # get a order
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        user_query = User.objects.all()
+        product_query = Product.objects.all()
+        data = serializer.data.copy()
+        for i in user_query:
+            if i.id == data.get('user_id'):
+                user = i
+                user_serializer = UserSerializer(user)
+                data['user_order'] = user_serializer.data
+        for i in product_query:
+            if i.id == data.get('product_id'):
+                product_order = i
+                product_serializer = ProductSerializer(product_order)
+                data['product_order'] = product_serializer.data
+        return Response({'success': True,
+                        'result': data})
+
     # get list order by distributor
     @action(methods=['get'], detail=True)
     def retrieve_by_distributor(self, request, *args, **kwargs):
@@ -29,6 +49,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(user_orders, many=True)
         datas = serializer.data.copy()
         product_query = Product.objects.select_related('provider_id')
+        reason_query = Reason.objects.all()
         for data in datas:
             for i in product_query:
                 if i.id == data.get('product_id'):
@@ -36,6 +57,11 @@ class OrderViewSet(viewsets.ModelViewSet):
                     product_serializer = ProductSerializer(product_order)
                     data['provider'] = i.provider_id.company_name
                     data['product_order'] = product_serializer.data
+            for i in reason_query:
+                if i.order_id_id == data.get('id'):
+                    reasons = i
+                    reason_serializer = ReasonSerializer(reasons)
+                    data['refusal_reason'] = reason_serializer.data
         return Response({'success': True,
                          'result': datas})
 

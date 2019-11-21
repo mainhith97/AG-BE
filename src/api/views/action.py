@@ -1,3 +1,5 @@
+import datetime
+
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.template.loader import render_to_string
@@ -7,7 +9,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from api.models import Product, User, Cart, History, Order, Comment, Type
-from api.serializers import ProductSerializer, UserSerializer, TypeSerializer
+from api.serializers import ProductSerializer, UserSerializer, TypeSerializer, ProductPopular
 from api.services.email import EmailThread
 from api.services.token import Token
 
@@ -74,7 +76,7 @@ class ActionViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def get_search_user(self, request, *args, **kwargs):
         try:
-            users = User.objects.filter(name__icontains=request.query_params.get('keyword'))
+            users = User.objects.filter(company_name__icontains=request.query_params.get('keyword'))
             user_serializer = UserSerializer(users, many=True)
             return Response({"success": True,
                              "result": user_serializer.data})
@@ -156,3 +158,23 @@ class ActionViewSet(viewsets.ModelViewSet):
         user.password = make_password(request.data.get('password'), salt=settings.SECRET_KEY)
         user.save()
         return Response({"success": True})
+
+    @action(methods=['get'], detail=False)
+    def get_list_popular(self, request, *args, **kwargs):
+        day = datetime.datetime.now()
+        products = Product.objects.all()
+        serializer = ProductPopular(products, many=True)
+        for data in serializer.data:
+            history_count = 0
+            history = History.objects.filter(created_at__month=day.month)
+            data['image'] = 'http://127.0.0.1:8001' + data['image']
+            for i in history:
+                products_name = [' '.join(j.split()[2:]) for j in i.products.split('\n')]
+                products = [product.id for product in Product.objects.filter(name__in=products_name)]
+                if data.get('id') in products:
+                    history_count += 10
+            order = Order.objects.filter(product_id=data.get('id'), created_at__month=day.month).count()*5
+            comment = Comment.objects.filter(product_id=data.get('id'), created_at__month=day.month).count()*2
+            data['count'] = history_count + order + comment
+        return Response({'success': True,
+                         'result': serializer.data})

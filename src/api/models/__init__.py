@@ -7,5 +7,6 @@ from api.models.history import History
 from api.models.order import Order
 from api.models.comment import Comment
 from api.models.reply import Reply
+from api.models.reason import Reason
 
 
