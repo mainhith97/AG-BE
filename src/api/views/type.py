@@ -46,7 +46,7 @@ class TypeViewSet(viewsets.ModelViewSet):
 
     # get list product by category oldest
     def retrieve(self, request, *args, **kwargs):
-        products = Product.objects.filter(type=kwargs.get('pk'))
+        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True)
         serializer = ProductSerializer(products, many=True)
         for product in serializer.data:
             product['image'] = 'http://127.0.0.1:8001' + product['image']
@@ -78,7 +78,7 @@ class TypeViewSet(viewsets.ModelViewSet):
     # get list product by category lastest
     @action(methods=['get'], detail=True)
     def retrieve_lastest(self, request, *args, **kwargs):
-        products = Product.objects.filter(type=kwargs.get('pk')).order_by('-created_at')
+        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True).order_by('-created_at')
         serializer = ProductSerializer(products, many=True)
         for product in serializer.data:
             product['image'] = 'http://127.0.0.1:8001' + product['image']
@@ -88,7 +88,7 @@ class TypeViewSet(viewsets.ModelViewSet):
     # get list product by category price low to high
     @action(methods=['get'], detail=True)
     def retrieve_pricelow(self, request, *args, **kwargs):
-        products = Product.objects.filter(type=kwargs.get('pk')).order_by('price_per_unit')
+        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True).order_by('price_per_unit')
         serializer = ProductSerializer(products, many=True)
         for product in serializer.data:
             product['image'] = 'http://127.0.0.1:8001' + product['image']
@@ -98,7 +98,7 @@ class TypeViewSet(viewsets.ModelViewSet):
     # get list product by category price high to low
     @action(methods=['get'], detail=True)
     def retrieve_pricehigh(self, request, *args, **kwargs):
-        products = Product.objects.filter(type=kwargs.get('pk')).order_by('-price_per_unit')
+        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True).order_by('-price_per_unit')
         serializer = ProductSerializer(products, many=True)
         for product in serializer.data:
             product['image'] = 'http://127.0.0.1:8001' + product['image']

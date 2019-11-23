@@ -24,11 +24,6 @@ class HistoryViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
         serializer = self.get_serializer(queryset, many=True)
         for data in serializer.data:
             products = data.get('products').split('\n')
@@ -78,7 +73,7 @@ class HistoryViewSet(viewsets.ModelViewSet):
     def list_by_farmer(self, request, *args, **kwargs):
         product_list = []
         sum_total = 0
-        histories = self.filter_queryset(self.get_queryset()).values('name', 'products', 'status')
+        histories = self.filter_queryset(self.get_queryset()).values('name', 'products', 'status', 'address', 'telephone')
         for history in histories:
             products = history.get('products').split('\n')
             for product in products:
@@ -95,7 +90,9 @@ class HistoryViewSet(viewsets.ModelViewSet):
                                          'quantity': str(quantity) + ' ' + unit,
                                          'provider': provider,
                                          'total': total,
-                                         'status': history.get('status')
+                                         'status': history.get('status'),
+                                         'address': history.get('address'),
+                                         'telephone': history.get('telephone')
                                          })
         return Response({'success': True,
                          'sum_total': sum_total,

@@ -20,6 +20,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                                  max_length=11, null=True, blank=True)
     description = models.CharField(max_length=255, null=True, blank=True)
     role = models.CharField(max_length=255, null=True)
+    active = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'username'  # username
 

@@ -35,13 +35,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     # get list user
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset()).exclude(role='mod')
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
+        queryset = self.filter_queryset(self.get_queryset()).filter(active=True).exclude(role='mod')
         serializer = self.get_serializer(queryset, many=True)
         return Response({'success': True,
                          'result': serializer.data})
@@ -49,14 +43,15 @@ class UserViewSet(viewsets.ModelViewSet):
     # get list supplier
     @action(methods=['get'], detail=False)
     def list_supplier(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset()).filter(role='farmer')
+        queryset = self.filter_queryset(self.get_queryset()).filter(role='farmer', active=True)
         serializer = self.get_serializer(queryset, many=True)
         return Response({'success': True,
                          'result': serializer.data})
+
     # get list distributor
     @action(methods=['get'], detail=False)
     def list_distributor(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset()).filter(role='distributor')
+        queryset = self.filter_queryset(self.get_queryset()).filter(role='distributor', active=True)
         serializer = self.get_serializer(queryset, many=True)
         return Response({'success': True,
                          'result': serializer.data})
@@ -71,7 +66,7 @@ class UserViewSet(viewsets.ModelViewSet):
     # get supplier profile
     @action(methods=['get'], detail=True)
     def retrieve_supplier(self, request, *args, **kwargs):
-        supplier = User.objects.get(id=kwargs.get('pk'))
+        supplier = User.objects.get(id=kwargs.get('pk'), active=True)
         serializer = self.get_serializer(supplier)
         return Response({'success': True,
                          'result': serializer.data})
@@ -92,15 +87,6 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'success': True,
                          'result': serializer.data})
 
-    # get list farmer
-    @action(methods=['get'], detail=False)
-    def list_farmer(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset()).filter(role='farmer')
-
-        serializer = self.get_serializer(queryset, many=True)
-        return Response({'success': True,
-                         'result': serializer.data})
-
     @action(methods=['put'], detail=True)
     def change_password(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -110,5 +96,20 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        self.perform_destroy(instance)
+        instance.active = False
+        instance.save()
         return Response(data={'success': True})
+
+    @action(methods=['put'], detail=True)
+    def activate(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.active = True
+        instance.save()
+        return Response(data={'success': True})
+
+    @action(methods=['get'], detail=False)
+    def get_banned_users(self, request, *args, **kwargs):
+        queryset = User.objects.filter(active=False)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'success': True,
+                         'result': serializer.data})

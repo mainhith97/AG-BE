@@ -7,7 +7,7 @@ from api.serializers import ProductSerializer, UserSerializer, TypeSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
+    queryset = Product.objects.filter(provider_id__active=True)
     serializer_class = ProductSerializer
 
     # get list product
@@ -54,7 +54,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     # get list newest
     @action(methods=['get'], detail=False)
     def get_list_newest(self, request, *args, **kwargs):
-        products = Product.objects.order_by('-created_at')[:8]
+        products = Product.objects.filter(provider_id__active=True).order_by('-created_at')[:8]
         serializer = self.get_serializer(products, many=True)
         return Response({'success': True,
                          'result': serializer.data})

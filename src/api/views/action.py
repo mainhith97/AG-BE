@@ -25,7 +25,8 @@ class ActionViewSet(viewsets.ModelViewSet):
         password = make_password(password=request.data.get('password'), salt=settings.SECRET_KEY)
         try:
             user = User.objects.get(username=username,
-                                    password=password)
+                                    password=password,
+                                    active=True)
             token = Token.encode(user)
             carts = Cart.objects.filter(user=user.id).values("quantity")
             cart_count = sum(cart.get('quantity') for cart in carts)
@@ -48,7 +49,8 @@ class ActionViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def get_search_result(self, request, *args, **kwargs):
         try:
-            products = Product.objects.filter(name__icontains=request.query_params.get('keyword'))
+            products = Product.objects.filter(name__icontains=request.query_params.get('keyword'),
+                                              provider_id__active=True)
             product_serializer = ProductSerializer(products, many=True)
             for product in product_serializer.data:
                 product['image'] = 'http://127.0.0.1:8001' + product['image']
@@ -76,7 +78,7 @@ class ActionViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def get_search_user(self, request, *args, **kwargs):
         try:
-            users = User.objects.filter(company_name__icontains=request.query_params.get('keyword'))
+            users = User.objects.filter(company_name__icontains=request.query_params.get('keyword'), active=True)
             user_serializer = UserSerializer(users, many=True)
             return Response({"success": True,
                              "result": user_serializer.data})
@@ -90,11 +92,12 @@ class ActionViewSet(viewsets.ModelViewSet):
         user_query = User.objects.exclude(role='mod')
         farmers = user_query.filter(role='farmer').count()
         distributors = user_query.filter(role='distributor').count()
+        banned_users = user_query.filter(active=False).count()
         products = Product.objects.all().count()
         sales = History.objects.all().count()
         requests = Order.objects.all().count()
         return Response({"success": True,
-                         "users": {'users': user_query.count(), 'farmers': farmers, 'distributors': distributors},
+                         "users": {'users': user_query.count(), 'farmers': farmers, 'distributors': distributors, 'banned_users': banned_users},
                          "products": products,
                          "sales": sales,
                          "requests": requests})
@@ -162,7 +165,7 @@ class ActionViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def get_list_popular(self, request, *args, **kwargs):
         day = datetime.datetime.now()
-        products = Product.objects.all()
+        products = Product.objects.filter(provider_id__active=True)
         serializer = ProductPopular(products, many=True)
         for data in serializer.data:
             history_count = 0
@@ -172,9 +175,9 @@ class ActionViewSet(viewsets.ModelViewSet):
                 products_name = [' '.join(j.split()[2:]) for j in i.products.split('\n')]
                 products = [product.id for product in Product.objects.filter(name__in=products_name)]
                 if data.get('id') in products:
-                    history_count += 10
-            order = Order.objects.filter(product_id=data.get('id'), created_at__month=day.month).count()*5
-            comment = Comment.objects.filter(product_id=data.get('id'), created_at__month=day.month).count()*2
+                    history_count += 5
+            order = Order.objects.filter(product_id=data.get('id'), created_at__month=day.month).count() * 3
+            comment = Comment.objects.filter(product_id=data.get('id'), created_at__month=day.month).count() * 2
             data['count'] = history_count + order + comment
         return Response({'success': True,
                          'result': serializer.data})
