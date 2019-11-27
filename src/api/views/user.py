@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from api.models import User
@@ -90,16 +91,24 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(methods=['put'], detail=True)
     def change_password(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.password = make_password(request.data.get('password'), salt=settings.SECRET_KEY)
+        if request.data.get('newpassword') != request.data.get('confirmpassword'):
+            raise ValidationError("Error: Passwords do not match")
+        if (request.data['oldpassword'] is not None) and (
+                request.data['oldpassword'] != "") and not instance.password == make_password(
+                password=request.data['oldpassword'], salt=settings.SECRET_KEY):
+            raise ValidationError("Error: Current Password was incorrect")
+        instance.password = make_password(request.data.get('newpassword'), salt=settings.SECRET_KEY)
         instance.save()
         return Response({"success": True})
 
+    # ban a user
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.active = False
         instance.save()
         return Response(data={'success': True})
 
+    # activate a banned user
     @action(methods=['put'], detail=True)
     def activate(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -107,6 +116,7 @@ class UserViewSet(viewsets.ModelViewSet):
         instance.save()
         return Response(data={'success': True})
 
+    # list banned user
     @action(methods=['get'], detail=False)
     def get_banned_users(self, request, *args, **kwargs):
         queryset = User.objects.filter(active=False)
