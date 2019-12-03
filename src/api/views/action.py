@@ -50,7 +50,7 @@ class ActionViewSet(viewsets.ModelViewSet):
     def get_search_result(self, request, *args, **kwargs):
         try:
             products = Product.objects.filter(name__icontains=request.query_params.get('keyword'),
-                                              provider_id__active=True)
+                                              provider_id__active=True, active=True)
             product_serializer = ProductSerializer(products, many=True)
             for product in product_serializer.data:
                 product['image'] = 'http://127.0.0.1:8001' + product['image']
@@ -78,7 +78,9 @@ class ActionViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def get_search_user(self, request, *args, **kwargs):
         try:
-            users = User.objects.filter(company_name__icontains=request.query_params.get('keyword'), active=True)
+            users = User.objects.filter(company_name__icontains=request.query_params.get('keyword'),
+                                        active=True) | User.objects.filter(
+                name__icontains=request.query_params.get('keyword'), active=True)
             user_serializer = UserSerializer(users, many=True)
             return Response({"success": True,
                              "result": user_serializer.data})
@@ -93,11 +95,12 @@ class ActionViewSet(viewsets.ModelViewSet):
         farmers = user_query.filter(role='farmer').count()
         distributors = user_query.filter(role='distributor').count()
         banned_users = user_query.filter(active=False).count()
-        products = Product.objects.all().count()
+        products = Product.objects.filter(provider_id__active=True, active=True).count()
         sales = History.objects.all().count()
         requests = Order.objects.all().count()
         return Response({"success": True,
-                         "users": {'users': user_query.count(), 'farmers': farmers, 'distributors': distributors, 'banned_users': banned_users},
+                         "users": {'users': user_query.count(), 'farmers': farmers, 'distributors': distributors,
+                                   'banned_users': banned_users},
                          "products": products,
                          "sales": sales,
                          "requests": requests})
@@ -105,7 +108,7 @@ class ActionViewSet(viewsets.ModelViewSet):
     # statistic by farmer
     @action(methods=['get'], detail=True)
     def get_statistic_by_farmer(self, request, *args, **kwargs):
-        product_history = Product.objects.filter(provider_id=kwargs.get('pk'))
+        product_history = Product.objects.filter(provider_id=kwargs.get('pk'), provider_id__active=True, active=True)
 
         product_list = 0
         sum_total = 0
@@ -165,7 +168,7 @@ class ActionViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=False)
     def get_list_popular(self, request, *args, **kwargs):
         day = datetime.datetime.now()
-        products = Product.objects.filter(provider_id__active=True)
+        products = Product.objects.filter(provider_id__active=True, active=True)
         serializer = ProductPopular(products, many=True)
         for data in serializer.data:
             history_count = 0

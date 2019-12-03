@@ -7,18 +7,12 @@ from api.serializers import ProductSerializer, UserSerializer, TypeSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(provider_id__active=True)
+    queryset = Product.objects.filter(provider_id__active=True, active=True)
     serializer_class = ProductSerializer
 
     # get list product
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        # pagination
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        queryset = self.filter_queryset(self.get_queryset()).order_by('-created_at')
 
         serializer = self.get_serializer(queryset, many=True)
         datas = serializer.data.copy()
@@ -54,7 +48,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     # get list newest
     @action(methods=['get'], detail=False)
     def get_list_newest(self, request, *args, **kwargs):
-        products = Product.objects.filter(provider_id__active=True).order_by('-created_at')[:8]
+        products = Product.objects.filter(provider_id__active=True, active=True).order_by('-created_at')[:8]
         serializer = self.get_serializer(products, many=True)
         return Response({'success': True,
                          'result': serializer.data})
@@ -63,7 +57,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     # detail= True la co id
     @action(methods=['get'], detail=True)
     def list_by_farmer(self, request, *args, **kwargs):
-        queryset = self.queryset.filter(provider_id=kwargs.get('pk'))
+        queryset = self.queryset.filter(provider_id=kwargs.get('pk')).order_by('-created_at')
         serializer = self.get_serializer(queryset, many=True)
         type_query = Type.objects.all()
         for data in serializer.data:
@@ -78,6 +72,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     # create product
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
+        data['active'] = True
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -103,5 +98,6 @@ class ProductViewSet(viewsets.ModelViewSet):
     # delete product
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        self.perform_destroy(instance)
+        instance.active = False
+        instance.save()
         return Response(data={'success': True})

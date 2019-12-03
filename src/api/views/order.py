@@ -40,7 +40,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 product_serializer = ProductSerializer(product_order)
                 data['product_order'] = product_serializer.data
         return Response({'success': True,
-                        'result': data})
+                         'result': data})
 
     # get list order by distributor
     @action(methods=['get'], detail=True)
@@ -94,8 +94,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     # unseen order
     @action(methods=['get'], detail=True)
     def get_unseen_orders(self, request, *args, **kwargs):
-        unseen_orders = self.filter_queryset(self.get_queryset()).filter(product_id__provider_id=kwargs.get('pk'),
-                                                                         status='Pending').count()
+        unseen_orders = self.queryset.filter(product_id__provider_id=kwargs.get('pk'), status='Pending',
+                                             product_id__active=True).count()
         return Response({'success': True,
                          'result': unseen_orders})
 

@@ -14,3 +14,4 @@ class History(TimeStampedModel):
                                              RegexValidator(regex='^\d+$', message='A valid integer is required.')],
                                  max_length=11, null=True, blank=True)
     status = models.CharField(max_length=255, null=True, blank=True, default='Pending')
+

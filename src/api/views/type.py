@@ -7,17 +7,21 @@ from api.serializers import TypeSerializer, ProductSerializer, UserSerializer
 
 
 class TypeViewSet(viewsets.ModelViewSet):
-    queryset = Type.objects.all()
+    queryset = Type.objects.filter(active=True)
     serializer_class = TypeSerializer
 
     # get list category
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer(queryset, many=True)
+        for data in serializer.data:
+            product_query = Product.objects.filter(active=True, type=data.get('id'))
+            data['product'] = product_query.count()
         return Response({'success': True,
                          'result': serializer.data})
 
     def create(self, request, *args, **kwargs):
+        request.data['active'] = True
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -41,18 +45,20 @@ class TypeViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        self.perform_destroy(instance)
+        instance.active = False
+        instance.save()
+        Product.objects.filter(type=instance.id).update(active=False)
         return Response(data={'success': True})
 
     # get list product by category oldest
     def retrieve(self, request, *args, **kwargs):
-        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True)
+        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True, active=True)
         serializer = ProductSerializer(products, many=True)
         for product in serializer.data:
             product['image'] = 'http://127.0.0.1:8001' + product['image']
         datas = serializer.data.copy()
-        user_query = User.objects.all()
-        type_query = Type.objects.all()
+        user_query = User.objects.filter(active=True)
+        type_query = Type.objects.filter(active=True)
         for data in datas:
             for i in user_query:
                 if i.id == data.get('provider_id'):
@@ -78,7 +84,7 @@ class TypeViewSet(viewsets.ModelViewSet):
     # get list product by category lastest
     @action(methods=['get'], detail=True)
     def retrieve_lastest(self, request, *args, **kwargs):
-        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True).order_by('-created_at')
+        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True, active=True).order_by('-created_at')
         serializer = ProductSerializer(products, many=True)
         for product in serializer.data:
             product['image'] = 'http://127.0.0.1:8001' + product['image']
@@ -88,7 +94,7 @@ class TypeViewSet(viewsets.ModelViewSet):
     # get list product by category price low to high
     @action(methods=['get'], detail=True)
     def retrieve_pricelow(self, request, *args, **kwargs):
-        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True).order_by('price_per_unit')
+        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True, active=True).order_by('price_per_unit')
         serializer = ProductSerializer(products, many=True)
         for product in serializer.data:
             product['image'] = 'http://127.0.0.1:8001' + product['image']
@@ -98,7 +104,7 @@ class TypeViewSet(viewsets.ModelViewSet):
     # get list product by category price high to low
     @action(methods=['get'], detail=True)
     def retrieve_pricehigh(self, request, *args, **kwargs):
-        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True).order_by('-price_per_unit')
+        products = Product.objects.filter(type=kwargs.get('pk'), provider_id__active=True, active=True).order_by('-price_per_unit')
         serializer = ProductSerializer(products, many=True)
         for product in serializer.data:
             product['image'] = 'http://127.0.0.1:8001' + product['image']

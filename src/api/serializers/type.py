@@ -5,4 +5,4 @@ from api.models import Type
 class TypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Type
-        fields = ('id', 'product_type')
+        fields = ('id', 'product_type', 'active')

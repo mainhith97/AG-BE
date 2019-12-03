@@ -5,3 +5,4 @@ from api.models import TimeStampedModel
 
 class Type(TimeStampedModel):
     product_type = models.CharField(max_length=255)
+    active = models.BooleanField(default=True)
