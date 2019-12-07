@@ -72,7 +72,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     # create product
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        data['active'] = True
+        # data['active'] = True
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -82,9 +82,12 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     # edit product
     def update(self, request, *args, **kwargs):
+        data = request.data.copy()
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if not data['image']:
+            data['image'] = instance.image
+        serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 

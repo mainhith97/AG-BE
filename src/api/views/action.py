@@ -125,7 +125,7 @@ class ActionViewSet(viewsets.ModelViewSet):
                     product_list += 1
 
         orders = Order.objects.select_related('product_id').filter(product_id__provider_id=kwargs.get('pk'))
-        accepted_orders = orders.filter(status='Accept')
+        accepted_orders = orders.filter(status='Accepted')
         accepted_orders_revenue = sum(order.proposed_price for order in accepted_orders)
 
         responses = Comment.objects.select_related('product_id').filter(

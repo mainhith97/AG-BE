@@ -77,6 +77,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         datas = serializer.data.copy()
         user_query = User.objects.all()
         product_query = Product.objects.all()
+        reason_query = Reason.objects.all()
         for data in datas:
             for i in user_query:
                 if i.id == data.get('user_id'):
@@ -88,6 +89,11 @@ class OrderViewSet(viewsets.ModelViewSet):
                     product_order = i
                     product_serializer = ProductSerializer(product_order)
                     data['product_order'] = product_serializer.data
+            for i in reason_query:
+                if i.order_id_id == data.get('id'):
+                    reasons = i
+                    reason_serializer = ReasonSerializer(reasons)
+                    data['refusal_reason'] = reason_serializer.data
         return Response({'success': True,
                          'result': datas})
 

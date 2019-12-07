@@ -18,4 +18,4 @@ class Product(TimeStampedModel):
     verify = models.CharField(max_length=255, null=True, blank=True)
     detail = models.TextField(max_length=10000, null=True, blank=True)
     image = models.ImageField(upload_to=name_file, max_length=255, blank=True, null=True)
-    active = models.BooleanField(null=True, blank=True, default=True)
+    active = models.BooleanField(default=True)
