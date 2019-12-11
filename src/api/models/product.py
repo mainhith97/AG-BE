@@ -13,7 +13,7 @@ class Product(TimeStampedModel):
     name = models.CharField(max_length=255, null=True, blank=True)
     unit = models.CharField(max_length=255, null=True, blank=True)
     price_per_unit = models.PositiveIntegerField(null=True, blank=True)
-    in_stock = models.IntegerField(null=True, blank=True)
+    in_stock = models.BooleanField(default=True)
     description = models.CharField(max_length=255, null=True, blank=True)
     verify = models.CharField(max_length=255, null=True, blank=True)
     detail = models.TextField(max_length=10000, null=True, blank=True)

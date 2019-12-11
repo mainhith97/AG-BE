@@ -1,4 +1,4 @@
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
 from rest_framework.compat import MinLengthValidator
 
@@ -9,7 +9,7 @@ class Order(TimeStampedModel):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_order', null=True, blank=True)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_order',
                                    null=True, blank=True)
-    quantity = models.PositiveIntegerField(null=True, blank=True)
+    quantity = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(10)])
     proposed_price = models.PositiveIntegerField(null=True, blank=True)
     datetime = models.DateField(auto_now=False, auto_now_add=False, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)

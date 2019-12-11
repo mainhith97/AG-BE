@@ -17,6 +17,7 @@ router.register(r'order', OrderViewSet, base_name="order")
 router.register(r'comment', CommentViewSet, base_name="comment")
 router.register(r'reply', ReplyViewSet, base_name="reply")
 router.register(r'reason', ReasonViewSet, base_name="reason")
+router.register(r'waiting_list', WaitinglistViewSet, base_name="waiting_list")
 urlpatterns = [
     url(r'^', include(router.urls))
 ]

@@ -7,3 +7,4 @@ from api.serializers.order import OrderSerializer
 from api.serializers.comment import CommentSerializer
 from api.serializers.reply import ReplySerializer
 from api.serializers.reason import ReasonSerializer
+from api.serializers.waitinglist import WaitinglistSerializer
