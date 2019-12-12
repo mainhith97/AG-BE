@@ -68,7 +68,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     # get list order by farmer
     @action(methods=['get'], detail=True)
     def retrieve_by_farmer(self, request, *args, **kwargs):
-        user_orders = self.filter_queryset(self.get_queryset()).filter(product_id__provider_id=kwargs.get('pk'))
+        user_orders = self.filter_queryset(self.get_queryset()).filter(product_id__provider_id=kwargs.get('pk')).order_by('id')
         for order in user_orders:
             if order.status == 'Pending':
                 order.status = "Seen"
